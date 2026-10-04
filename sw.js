@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pickle-match-v3';
+const CACHE_NAME = 'NineDrawMak_2';
 
 const ASSETS = [
   './index.html',
