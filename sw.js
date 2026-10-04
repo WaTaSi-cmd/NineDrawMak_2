@@ -1,7 +1,6 @@
 const CACHE_NAME = 'pickle-match-v2';
 
 const ASSETS = [
-  './',
   './index.html',
   './manifest.json',
   './sports_court192_2.png',
