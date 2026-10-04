@@ -1,4 +1,4 @@
-const CACHE_NAME = 'NineDrawMak_2_v2';
+const CACHE_NAME = 'NineDrawMak_4';
 
 const ASSETS = [
   './index.html',
