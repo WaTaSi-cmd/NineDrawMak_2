@@ -1,7 +1,7 @@
 {
   "name": "ピックルボール マッチングv2",
   "short_name": "ピックルマッチv2",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f9f9",
