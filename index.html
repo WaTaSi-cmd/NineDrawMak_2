@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ピックルボール マッチングv2</title>
+    <title>対戦組み合わせv2</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2a9d8f">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="sports_court192_2.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ピックルマッチ">
+    <meta name="apple-mobile-web-app-title" content="組み合わせ">
     <style>
         :root {
             --primary-color: #2a9d8f;
@@ -1134,9 +1134,8 @@ const courtState = activeCourts[targetIndex];
     // ★ここまで
   
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('Service Worker Registered'))
-        .catch(err => console.error('Service Worker Failed', err));
+    navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered'));
 }
 </script>
 </body>
