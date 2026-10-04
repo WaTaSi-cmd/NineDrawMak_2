@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pickle-match-v2';
+const CACHE_NAME = 'pickle-match-v3';
 
 const ASSETS = [
   './index.html',
