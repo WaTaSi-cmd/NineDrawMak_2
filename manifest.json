@@ -1,6 +1,6 @@
 {
-  "name": "ピックルボール マッチング",
-  "short_name": "ピックルマッチ",
+  "name": "ピックルボール マッチングv2",
+  "short_name": "ピックルマッチv2",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
