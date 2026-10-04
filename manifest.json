@@ -1,7 +1,7 @@
 {
   "name": "組み合わせv3",
   "short_name": "組み合わせv3",
-  "id":"/",
+  "id":"/", 
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
