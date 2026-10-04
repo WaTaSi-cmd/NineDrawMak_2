@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ピックルボール マッチング</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2a9d8f">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ピックルマッチ">
+    <style>
+        :root {
+            --primary-color: #2a9d8f;
+            --secondary-color: #264653;
+            --bg-color: #f4f9f9;
+            --card-bg: #ffffff;
+            --disabled-color: #cccccc;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--secondary-color);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;   /* ★要素を横ではなく、上から下へ縦並びにする */
+            align-items: center;       /* ★左右の中央に寄せる */
+            justify-content: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+            gap: 16px;                 /* ★縦の隙間をあける */
+        }
+
+        .app-container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(42, 157, 143, 0.15);
+            width: 100%;
+            max-width: 540px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+        .form-group { margin-bottom: 16px; }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+        .radio-group { display: flex; gap: 10px; margin-bottom: 6px; }
+        .radio-label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background-color: var(--bg-color);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .radio-label {
+            border-color: var(--primary-color);
+            background-color: rgba(42, 157, 143, 0.1);
+            color: var(--primary-color);
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none; /* ★標準プロパティを追加して警告を修正 */
+        }
+        input:disabled, .radio-group.disabled .radio-label {
+            background-color: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+            border-color: transparent;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:disabled { background-color: var(--disabled-color); }
+        .after-match-section {
+            display: none;
+            border-top: 2px dashed var(--primary-color);
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        .btn-danger { background-color: #e63946; color: white; margin-bottom: 0; }
+        .btn-reset { background-color: #6c757d; color: white; }
+        .input-with-btn { display: flex; gap: 8px; }
+        .input-with-btn input { flex: 1; }
+        .input-with-btn .btn { width: auto; padding: 12px 18px; margin-bottom: 0; }
+        
+        .status-summary {
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--secondary-color);
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .court-container { margin-top: 20px; }
+        .court-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background-color: #eef8f6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .court-info { font-size: 15px; font-weight: bold; flex: 1; }
+        .btn-action {
+            color: white;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: center;
+        }
+        .btn-finish-mode { background-color: #e76f51; }
+        .btn-next-mode { background-color: #2a9d8f; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>Nine Draw Maker</h1>
+
+    <div class="form-group">
+        <label>モード選択</label>
+        <div class="radio-group" id="mode-group">
+            <input type="radio" id="mode1" name="mode" value="1" onchange="updateLabels()">
+            <label for="mode1" class="radio-label">ペア固定</label>
+            <input type="radio" id="mode2" name="mode" value="2" checked onchange="updateLabels()">
+            <label for="mode2" class="radio-label">ペアランダム</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label id="count-label">参加者数</label>
+        <input type="number" id="participant-count" min="1" value="17">
+    </div>
+
+    <div class="form-group">
+        <label>使用コート数</label>
+        <input type="number" id="court-count" min="1" value="3">
+    </div>
+
+    <button class="btn btn-primary" id="match-btn" onclick="executeMatching()">マッチング</button>
+
+    <div class="after-match-section" id="after-match-section">
+        <div class="status-summary" id="status-summary">現在の空きコート数: 0面</div>
+        <button class="btn btn-reset" id="reset-btn" onclick="resetApp()">リセット</button>
+        <button class="btn btn-outline" id="add-btn" onclick="addParticipant()">参加者追加</button>
+
+        <div class="form-group" style="margin-top: 16px;">
+
+        <!-- ★ここから：一時休み・復帰機能を追加（要望） -->
+        <div class="form-group" style="margin-top: 16px;">
+            <label>一時休み・復帰（番号を入力）</label>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <!-- 番号入力欄（左側の余白を埋めるため自動伸縮） -->
+                <input type="number" id="rest-id" min="1" placeholder="例: 3" style="flex: 1; height: 60px;">
+                
+                <!-- 横並びに配置される固定サイズの縦書きボタン2つ -->
+                <div style="display: flex; gap: 6px; width: 96px; min-width: 96px; flex-shrink: 0;">
+                    <button class="btn-action" id="btn-rest-pause" style="background-color: #f4a261; color: white; font-size: 13px; padding: 0px; width: 45px; min-width: 45px; height: 60px; min-height: 60px; writing-mode: vertical-rl; text-orientation: upright; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="pauseParticipant()">休み</button>
+                    <button class="btn-action" id="btn-rest-resume" style="background-color: #2a9d8f; color: white; font-size: 13px; padding: 0px; width: 45px; min-width: 45px; height: 60px; min-height: 60px; writing-mode: vertical-rl; text-orientation: upright; display: flex; align-items: center; justify-content: center; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="resumeParticipant()">復帰</button>
+                </div>
+            </div>
+            <!-- お休み中のメンバーを小さく表示する行 -->
+            <div id="resting-list-display" style="font-size: 12px; color: #e76f51; margin-top: 6px; font-weight: bold; min-height: 18px;">
+                お休み中: なし
+            </div>
+        </div>
+        <!-- ★ここまで -->
+
+          
+            <label>参加者減少（削除する番号を入力）</label>
+            <div class="input-with-btn">
+                <input type="number" id="remove-id" min="1" placeholder="例: 5">
+                <button class="btn btn-danger" id="remove-btn" onclick="removeParticipant()">削除</button>
+            </div>
+        </div>
+
+        <div class="court-container" id="court-display-area"></div>
+    </div>
+</div>
+  
+<!-- ★アプリの枠内の最下部に履歴エリアを配置 -->
+        <div style="margin-top: 25px; border-top: 2px dashed var(--primary-color); padding-top: 15px;">
+            <h3 style="margin-top: 0; font-size: 15px; color: var(--secondary-color); padding-bottom: 6px; font-weight: bold;">
+                対戦履歴（メモ）
+            </h3>
+            <div id="match-history-log" style="font-size: 14px; line-height: 1.6; color: #555; max-height: 160px; overflow-y: auto; font-family: monospace;">
+                <span style="color: #999;">（まだ履歴はありません）</span>
+            </div>
+<script>
+
+    // グローバル変数の宣言
+    /** @type {any[]} */
+    let players = [];
+    /** @type {number} */
+    let initialCount = 0; 
+    /** @type {number} */
+    let globalCourtCount = 0; 
+    /** @type {any[]} */
+    let activeCourts = []; 
+    /** @type {any[]} */
+    let courtPlayers = [];
+
+    /** @returns {void} */
+    function updateLabels() {
+        const modeElement = /** @type {HTMLInputElement} */ (document.querySelector('input[name="mode"]:checked'));
+        const mode = modeElement.value;
+        const countLabel = document.getElementById('count-label');
+        if (countLabel) {
+            countLabel.textContent = (mode === "1") ? "ペア数" : "参加者数";
+        }
+    }
+
+   
+// 初回マッチング実行（自動選出関数を残したまま、手動選択プルダウンで起動する版）
+    /** @returns {void} */
+    function executeMatching() {
+        const countInput = /** @type {HTMLInputElement} */ (document.getElementById('participant-count'));
+        const courtInput = /** @type {HTMLInputElement} */ (document.getElementById('court-count'));
+        const matchBtn = /** @type {HTMLButtonElement} */ (document.getElementById('match-btn'));
+        const mode1 = /** @type {HTMLInputElement} */ (document.getElementById('mode1'));
+        const mode2 = /** @type {HTMLInputElement} */ (document.getElementById('mode2'));
+        const modeGroup = document.getElementById('mode-group');
+        const afterMatchSection = document.getElementById('after-match-section');
+
+        initialCount = parseInt(countInput.value) || 0;
+        globalCourtCount = parseInt(courtInput.value) || 0;
+        if (initialCount > 0 && globalCourtCount > 0){
+          for (let cnt = 0; cnt < globalCourtCount; cnt++)
+          courtPlayers[cnt] = [];
+        }else{
+          return alert("1以上の数値を入力してください。");
+        }
+
+        if (players.length === 0) {
+            for (let i = 1; i <= initialCount; i++) {
+                players.push([
+                    i,      // [0] プレイヤー番号
+                    0,      // [1] 連続戦数
+                    0,      // [2] 連続休憩数
+                    0,      // [3] 総戦数
+                    0,      // [4] 総休憩数
+                    0,      // [5] 対戦中コート
+                    [],     // [6] ペア履歴
+                    [],     // [7] 対戦相手履歴
+                    false,  // [8] 削除フラグ
+                    0,      // [9] ペア回数
+                    0,      // [10] 対戦回数
+                    i,      // [11] 元指標
+                    false   // [12] 一時お休みフラグ（手動プルダウン自動除外用に使用）
+                ]);
+            }
+        }
+
+        countInput.disabled = courtInput.disabled = true;
+        if (matchBtn) matchBtn.disabled = true;
+        if (mode1) mode1.disabled = true;
+        if (mode2) mode2.disabled = true;
+        if (modeGroup) modeGroup.classList.add('disabled');
+        if (afterMatchSection) afterMatchSection.style.display = 'block';
+
+        // 🌟【ここをハック】
+        // ファイル内にある generateNextMatch などのプログラムは一切消さずに残したまま、
+        // 初期の画面表示だけを「waiting（対戦待ち＝手動プルダウン選択枠）」に設定します。
+        activeCourts = [];
+        for (let c = 0; c < globalCourtCount; c++) {
+            activeCourts[c] = { status: "waiting", playerIds: null };
+        }
+        
+        checkAndRefreshRestingPlayers();
+        
+        // 手動プルダウン付きのコート枠を画面に描画します
+        renderCourts();
+        
+        // 画面下のリアルタイム集計テーブルも表示
+        //if (typeof showDebugStatus === "function") {
+        //    showDebugStatus();
+        //}
+    }
+
+    /** 
+     * @param {number} courtNum
+     * @returns {any[] | null}
+     */
+    function generateNextMatch(courtNum) {
+        const modeElement = /** @type {HTMLInputElement} */ (document.querySelector('input[name="mode"]:checked'));
+        const mode = modeElement.value;
+        return (mode === "1") ? generatePairFixedMatch(courtNum) : generatePairRandomMatch(courtNum);
+    }
+
+    // 空きコート数が0になった瞬間に待機組のステータスを一括更新
+    /** @returns {void} */
+    function checkAndRefreshRestingPlayers() {
+        let playingCount = activeCourts.filter(/** @param {any} c */ (c) => c && c.status === "playing").length;
+        let disabledCount = activeCourts.filter(/** @param {any} c */ (c) => c && c.status === "disabled").length;
+        let effectiveCourtCount = globalCourtCount - disabledCount;
+
+        if (effectiveCourtCount > 0 && effectiveCourtCount === playingCount) {
+            for (let i = 0; i < players.length; i++) {
+                if (players[i][5] === 0 && players[i][8] === false) { 
+                    players[i][1] = 0;   
+                    players[i][2]++;     
+                    players[i][4]++;     
+                }
+            }
+        }
+    }
+
+    // 【ペア固定モード】
+    /** 
+     * @param {number} courtNum
+     * @returns {any[] | null}
+     */
+    function generatePairFixedMatch(courtNum) {
+        let available = [];
+        for (let i = 0; i < players.length; i++) {
+          if (players[i][8] === false && players[i][5] === 0 && players[i][12] !== true) {
+            available.push(players[i]);
+          }
+        }
+        if (available.length < 2) return null;
+
+        let p1 = null;
+        for ( let p1cnt = 0; p1cnt < 2; p1cnt++ ){
+          for (let j = 0; j < available.length; j++) {
+            if(courtPlayers[courtNum-1].length <= 0 || p1cnt === 1){
+              p1 = available[j][0];
+              break;
+            }
+            if (!courtPlayers[courtNum-1].includes(available[j][0]))  {
+              p1 = available[j][0];
+              break;
+            }
+          }
+        }
+
+        let p2 = null;
+        for(let p2cnt=0; p2cnt<2; p2cnt++ ){
+          if(p2 !== null) break;
+          for (let j = 0; j < available.length; j++) {
+            let p2_candidate = available[j][0];
+            if (p2_candidate === p1) continue;
+            if(p2cnt === 0){
+              if (courtPlayers[courtNum-1].includes(p2_candidate) && available[j][1] > 1) continue;
+            }
+            if (!available[j][7].includes(p1)) {
+              p2 = p2_candidate;
+              break;
+            }else{
+              let opponentCount = available[j][7].filter(/** @param {any} v */ (v) => v === p1).length;
+              available[j][10] = opponentCount;
+            }
+          }
+          if (p2 === null) {
+            available.sort((a, b) => a[10] - b[10] || a[11] - b[11]);
+            for (let j = 0; j < available.length; j++) {
+              let p2_candidate = available[j][0];
+              if (p2_candidate === p1) continue;
+              if(p2cnt === 0){
+                if (courtPlayers[courtNum-1].includes(p2_candidate) && available[j][1] > 1) continue;
+              }
+              p2 = p2_candidate;
+              break;
+            }
+            available.sort((a, b) => a[11] - b[11]);
+          }
+        }
+
+        let confirmed = [p1, p2];
+        courtPlayers[courtNum-1] = confirmed;
+        updatePlayerStats(confirmed, true, courtNum);
+        return [p1, p2, 0, 0];
+    }
+    // 【ペアランダムモード】3段階緩和数珠つなぎロジック
+    /** 
+     * @param {number} courtNum
+     * @returns {any[] | null}
+     */
+    function generatePairRandomMatch(courtNum) {
+        let available = [];
+        for (let i = 0; i < players.length; i++) {
+            if (players[i][8] === false && players[i][5] === 0 && players[i][12] !== true) {
+                available.push(players[i]);
+            }
+        }
+        if (available.length < 4) return null;
+
+        let p1 = null;
+        // ① 最初のプレイヤー（P1）を選出
+        for (let p1cnt = 0; p1cnt < 2; p1cnt++) {
+            if (p1 !== null) break;
+
+            for (let j = 0; j < available.length; j++) {
+              if (courtPlayers[courtNum-1].length <= 0 || p1cnt === 1) {
+                  p1 = available[j][0];
+                  break;
+              }
+              if (!courtPlayers[courtNum-1].includes(available[j][0])) {
+                  p1 = available[j][0];
+                  break;
+              }
+           }
+        }
+  
+        // ② ①の相方ペア（P2）を決める
+        let p2 = null;
+        for (let p2cnt = 0; p2cnt < 2; p2cnt++) {
+          if (p2 !== null) break;
+          for (let j = 0; j < available.length; j++) {
+            let p2_candidate = available[j][0];
+            if (p2_candidate === p1) continue;
+            if (p2cnt === 0) {
+              if (courtPlayers[courtNum-1].includes(p2_candidate) && available[j][1] > 1) continue;
+            }
+            if (!available[j][6].includes(p1) && !available[j][7].includes(p1)) {
+              p2 = p2_candidate;
+              break;
+            }
+          }
+
+          // 対象なしのとき (2) ペア履歴に存在しない相手をスキャン
+          if (p2 === null) {
+            let pairCount = 0;
+            let opponentCount = 0;
+            for (let j = 0; j < available.length; j++) {
+              let p2_candidate = available[j][0];
+              if (p2_candidate === p1) continue;
+              if (p2cnt === 0) {
+                if (courtPlayers[courtNum-1].includes(p2_candidate) && available[j][1] > 1) continue;
+              }
+              if (!available[j][6].includes(p1)) {
+                p2 = p2_candidate;
+                break;
+              } else {
+                pairCount = available[j][6].filter(/** @param {any} v */ (v) => v === p1).length;
+                opponentCount = available[j][7].filter(/** @param {any} v */ (v) => v === p1).length;
+                available[j][9] = pairCount;
+                available[j][10] = opponentCount;
+              }
+            }
+          }
+          // 対象なしのとき (3) ソート
+          if (p2 === null) {
+            available.sort((a, b) => a[9] - b[9] || a[10] - b[10] || a[11] - b[11]);
+            for (let j = 0; j < available.length; j++) {
+              let p2_candidate = available[j][0];
+              if (p2_candidate === p1) continue;
+              if (p2cnt === 0) {
+                if (courtPlayers[courtNum-1].includes(p2_candidate) && available[j][1] > 1) continue;
+              }
+              p2 = p2_candidate;
+              break;
+            }
+            available.sort((a, b) => a[11] - b[11]);
+          }
+        }
+    
+        // ③ ①の対戦相手（P3）を決める
+        let p3 = null;
+        for (let p3cnt = 0; p3cnt < 2; p3cnt++) {
+          if (p3 !== null) break;
+          for (let j = 0; j < available.length; j++) {
+            let p3_candidate = available[j][0];
+            if (p3_candidate === p1 || p3_candidate === p2) continue;
+            if (p3cnt === 0) {
+              if (courtPlayers[courtNum-1].includes(p3_candidate) && available[j][1] > 1) continue;
+            }
+            if (!available[j][6].includes(p1) && !available[j][7].includes(p1) && !available[j][6].includes(p2) && !available[j][7].includes(p2)) {
+                p3 = p3_candidate;
+                break;
+            } else {
+              let pairCount = available[j][6].filter(/** @param {any} v */ (v) => v === p1 || v === p2).length;
+              let opponentCount = available[j][7].filter(/** @param {any} v */ (v) => v === p1 || v === p2).length;
+              available[j][9] = pairCount;
+              available[j][10] = opponentCount;
+            }
+          }
+          if (p3 === null) {
+            available.sort((a, b) => a[10] - b[10] || a[9] - b[9] || a[11] - b[11]);
+            for (let j = 0; j < available.length; j++) {
+              let p3_candidate = available[j][0];
+              if (p3_candidate === p1 || p3_candidate === p2) continue;
+              if (p3cnt === 0) {
+                if (courtPlayers[courtNum-1].includes(p3_candidate) && available[j][1] > 1) continue;
+              }
+              p3 = p3_candidate;
+            }
+            available.sort((a, b) => a[11] - b[11]);
+          }
+        }
+
+        // ④ ③の相方ペア（P4）を決める
+        let p4 = null;
+        for (let p4cnt = 0; p4cnt < 2; p4cnt++) {
+          if (p4 !== null) break;
+          for (let j = 0; j < available.length; j++) {
+            let p4_candidate = available[j][0];
+            if (p4_candidate === p1 || p4_candidate === p2 || p4_candidate === p3) continue;
+            if (p4cnt === 0) {
+              if (courtPlayers[courtNum-1].includes(p4_candidate) && available[j][1] > 1) continue;
+            }
+            if (!available[j][6].includes(p1) && !available[j][7].includes(p1) && !available[j][6].includes(p2) && !available[j][7].includes(p2) && !available[j][6].includes(p3) && !available[j][7].includes(p3)) {
+              p4 = p4_candidate;
+              break;
+            }
+          }
+            
+          if (p4 === null) {
+            for (let j = 0; j < available.length; j++) {
+              let p4_candidate = available[j][0];
+              if (p4_candidate === p1 || p4_candidate === p2 || p4_candidate === p3) continue;
+              if (p4cnt === 0) {
+                if (courtPlayers[courtNum-1].includes(p4_candidate) && available[j][1] > 1) continue;
+              }
+              if (!available[j][6].includes(p3)) {
+                p4 = p4_candidate;
+                break;
+              } else {
+                let pairCount = available[j][6].filter(/** @param {any} v */ (v) => v === p3).length;
+                let opponentCount = available[j][7].filter(/** @param {any} v */ (v) => v === p1 || v === p2 || v === p3).length;
+                available[j][9] = pairCount;
+                available[j][10] = opponentCount;
+              }
+            }
+          }
+
+          if (p4 === null) {
+            available.sort((a, b) => a[9] - b[9] || a[10] - b[10] || a[11] - b[11]);
+            for (let j = 0; j < available.length; j++) {
+              let p4_candidate = available[j][0];
+              if (p4_candidate === p1 || p4_candidate === p2 || p4_candidate === p3) continue;
+              if (p4cnt === 0) {
+                if (courtPlayers[courtNum-1].includes(p4_candidate) || available[j][1] > 1) continue;
+              }
+              p4 = p4_candidate;
+              break;
+            }
+            available.sort((a, b) => a[11] - b[11]);
+          }
+        }
+
+        let confirmed = [p1, p2, p3, p4];
+        courtPlayers[courtNum-1] = confirmed;
+        updatePlayerStats(confirmed, false, courtNum);
+        return confirmed;
+    }
+
+    // 各種戦数・コート番号・履歴を共通更新する関数
+    /** 
+     * @param {any[]} confirmed
+     * @param {boolean} isFixedMode
+     * @param {number} courtNum
+     * @returns {void}
+     */
+    function updatePlayerStats(confirmed, isFixedMode, courtNum) {
+        let p1 = confirmed[0], p2 = confirmed[1];
+        let p3 = isFixedMode ? 0 : confirmed[2], p4 = isFixedMode ? 0 : confirmed[3];
+
+        for (let i = 0; i < players.length; i++) {
+            let pid = players[i][0];
+            if (!confirmed.includes(pid)) continue;
+
+            players[i][5] = courtNum; 
+            players[i][1]++;          
+            players[i][3]++;          
+            players[i][2] = 0;        
+
+            if (isFixedMode) {
+                players[i][7].push(p2);
+                if (pid === p2) { players[i][7][players[i][7].length - 1] = p1; }
+            } else {
+                if (pid === p1) { players[i][6].push(p2); players[i][7].push(p3, p4); }
+                else if (pid === p2) { players[i][6].push(p1); players[i][7].push(p3, p4); }
+                else if (pid === p3) { players[i][6].push(p4); players[i][7].push(p1, p2); }
+                else if (pid === p4) { players[i][6].push(p3); players[i][7].push(p1, p2); }
+            }
+        }
+    }
+  ///
+
+      // 画面にコートごとの状態を描画する処理（サイズ・位置完全固定版）
+    /** @returns {void} */
+    function renderCourts() {
+        const displayArea = document.getElementById('court-display-area');
+        if (!displayArea) return;
+        displayArea.innerHTML = ""; 
+
+        const modeElement = /** @type {HTMLInputElement} */ (document.querySelector('input[name="mode"]:checked'));
+        const mode = modeElement.value;
+        let playingCourtCount = 0;
+
+        for (let c = 0; c < globalCourtCount; c++) {
+            const courtRow = document.createElement('div');
+            courtRow.className = "court-row";
+            
+            // 1行の縦幅（高さ）をゆったり広げ、中身を中央寄せにする
+            courtRow.style.padding = "10px 8px"; 
+            courtRow.style.minHeight = "80px";
+            courtRow.style.height = "80px";       // ★行自体の高さも完全に固定
+            courtRow.style.display = "flex";
+            courtRow.style.alignItems = "center";
+            courtRow.style.boxSizing = "border-box";
+
+            // 対戦カード表示エリア（残りの真ん中のスペースをすべて使い、改行を禁止）
+            const courtInfo = document.createElement('div');
+            courtInfo.className = "court-info";
+            courtInfo.style.fontSize = "15px"; 
+            courtInfo.style.whiteSpace = "nowrap"; 
+            courtInfo.style.overflow = "hidden";
+            courtInfo.style.flex = "1";            // ★真ん中のスペースを可変にして、ボタンの位置を固定する
+            courtInfo.style.marginRight = "6px";   
+
+            // 右側のボタンコンテナ（横並び、幅を完全に固定）
+            const btnContainer = document.createElement('div');
+            btnContainer.style.display = "flex";
+            btnContainer.style.flexDirection = "row"; 
+            btnContainer.style.gap = "6px";           
+            btnContainer.style.width = "96px";        // ★コンテナ全体の幅を「96px」に完全固定
+            btnContainer.style.minWidth = "112px";
+            btnContainer.style.flexShrink = "0";      
+
+            // 共通のボタン固定スタイルを設定する関数
+            /** @param {HTMLButtonElement} btn */
+            const setButtonStyle = (btn) => {
+                btn.className = "btn-action";
+                btn.style.fontSize = "13px";           
+                btn.style.padding = "0px";             // ズレを防ぐため余白を0に
+                btn.style.width = "55px";              // ★ボタンの横幅を「50px」に完全固定
+                btn.style.minWidth = "55px";
+                btn.style.height = "60px";             // ★ボタンの縦幅を「60px」に完全固定
+                btn.style.minHeight = "60px";
+                btn.style.writingMode = "vertical-rl"; 
+                btn.style.textOrientation = "upright"; 
+                btn.style.display = "flex";
+                btn.style.alignItems = "center";
+                btn.style.justifyContent = "center";
+                btn.style.flexShrink = "0";            // ★絶対に潰れないように固定
+                btn.style.boxSizing = "border-box";
+            };
+
+            // 「終了？」ボタンの作成
+            const finishBtn = document.createElement('button');
+            setButtonStyle(finishBtn);
+            finishBtn.classList.add("btn-finish-mode");
+            finishBtn.textContent = "終了？";
+
+            // 「次対戦」ボタンの作成
+            const nextBtn = document.createElement('button');
+            setButtonStyle(nextBtn);
+            nextBtn.classList.add("btn-next-mode");
+            nextBtn.textContent = "次対戦";
+
+            const courtState = activeCourts[c];
+
+            if (courtState && courtState.status === "playing") {
+                playingCourtCount++;
+                let matchData = courtState.playerIds;
+                if (mode === "1") {
+                    courtInfo.innerHTML = `C${c + 1} <span style="font-size: 25px; font-weight: bold; color: #264653;">P${matchData[0]} vs P${matchData[1]}</span>`;
+                } else {
+                    courtInfo.innerHTML = `C${c + 1} <span style="font-size: 25px; font-weight: bold; color: #264653;">${matchData[0]}.${matchData[1]}<span style="font-size:14px;font-weight:normal;color:#6c757d;margin:0 2px;">vs</span>${matchData[2]}.${matchData[3]}</span>`;
+                }
+                
+                finishBtn.disabled = false;
+                nextBtn.disabled = true;
+                finishBtn.style.opacity = "1";
+                nextBtn.style.opacity = "0.3";
+            } else if (courtState && courtState.status === "waiting") {
+                courtInfo.innerHTML = `C${c + 1} <span style="font-size: 15px; color: #6c757d; font-weight: bold;">（対戦待ち）</span>`;
+                
+                finishBtn.disabled = true;
+                nextBtn.disabled = false;
+                finishBtn.style.opacity = "0.3";
+                nextBtn.style.opacity = "1";
+            } else {
+                courtInfo.innerHTML = `C${c + 1} <span style="font-size: 14px; color: #999;">（待機プレイヤー不足）</span>`;
+                finishBtn.style.display = "none";
+                nextBtn.style.display = "none";
+            }
+
+            finishBtn.onclick = (function(courtId) {
+                return function() { clickFinish(courtId); };
+            })(c + 1);
+
+            nextBtn.onclick = (function(courtIdx) {
+                return function() { clickNextMatch(courtIdx); };
+            })(c);
+
+            // 左側の「稼働/休止」ボタン（こちらも完全にサイズを固定）
+            const pauseBtn = document.createElement('button');
+            pauseBtn.style.padding = "0px";    
+            pauseBtn.style.fontSize = "12px";     
+            pauseBtn.style.borderRadius = "4px";
+            pauseBtn.style.border = "none";
+            pauseBtn.style.cursor = "pointer";
+            pauseBtn.style.color = "white";
+            pauseBtn.style.marginRight = "8px";
+            pauseBtn.style.fontWeight = "bold";
+            pauseBtn.style.width = "25px";         // ★横幅「25px」に固定
+            pauseBtn.style.minWidth = "25px";     
+            pauseBtn.style.height = "60px";        // ★縦幅「60px」に固定
+            pauseBtn.style.minHeight = "60px"; 
+            pauseBtn.style.writingMode = "vertical-rl";
+            pauseBtn.style.textOrientation = "upright"; 
+            pauseBtn.style.display = "flex";
+            pauseBtn.style.alignItems = "center";
+            pauseBtn.style.justifyContent = "center";
+            pauseBtn.style.flexShrink = "0";
+            pauseBtn.style.boxSizing = "border-box";
+
+            if (courtState && courtState.status === "disabled") {
+                courtInfo.innerHTML = `C${c + 1} <span style="font-size: 15px; color: #e76f51; font-weight: bold;">【現在休止中】</span>`;
+                finishBtn.style.display = "none";
+                nextBtn.style.display = "none";
+                pauseBtn.textContent = "休止";
+                pauseBtn.style.backgroundColor = "#2a9d8f"; 
+            } else {
+                pauseBtn.textContent = "稼働";
+                pauseBtn.style.backgroundColor = "#6c757d"; 
+            }
+
+            pauseBtn.onclick = (function(courtId) {
+                return function() { toggleCourtActive(courtId); };
+            })(c + 1);
+
+            btnContainer.appendChild(finishBtn);
+            btnContainer.appendChild(nextBtn);
+
+            courtRow.appendChild(pauseBtn);  
+            courtRow.appendChild(courtInfo); 
+            courtRow.appendChild(btnContainer); 
+            displayArea.appendChild(courtRow);
+        }
+
+        let emptyCourtCount = globalCourtCount - playingCourtCount;
+        const statusSummary = document.getElementById('status-summary');
+        if (statusSummary) {
+            statusSummary.textContent = `現在の空きコート数: ${emptyCourtCount}面`;
+        }
+        //showDebugStatus();
+    }
+
+
+
+  ////
+
+
+  
+
+    // 全員のステータスを画面下に常時一覧表示する関数
+    /** @returns {void} */
+    function showDebugStatus() {
+        let debugContainer = document.getElementById('debug-container');
+        if (!debugContainer) {
+            debugContainer = document.createElement('div');
+            debugContainer.id = 'debug-container';
+            debugContainer.className = 'app-container';
+            debugContainer.style.marginTop = '20px';
+            debugContainer.style.background = '#264653';
+            debugContainer.style.color = 'white';
+            document.body.appendChild(debugContainer);
+        }
+
+        let html = '<h3 style="margin-top: 0; color: #2a9d8f; font-size: 15px; border-bottom: 1px solid #2a9d8f; padding-bottom: 6px; margin-bottom: 10px;">プレイヤー状況（リアルタイム数値）</h3>';
+        html += '<table style="width:100%; border-collapse: collapse; text-align:center; font-family: monospace; font-size: 13px;">';
+        html += '<tr style="border-bottom: 2px solid #2a9d8f; color: #2a9d8f; font-weight: bold;"><th>番号</th><th>連休</th><th>連戦</th><th>総戦</th><th>総休</th><th>コート</th><th>状態</th></tr>';
+        
+        for (let i = 0; i < players.length; i++) {
+            let p = players[i];
+            let statusText = p[8] ? '<span style="color:#cccccc;">削除</span>' : (p[5] > 0 ? `<span style="color:#e76f51;">コート${p[5]}</span>` : '<span style="color:#2a9d8f;">待機</span>');
+            let trBg = p[5] > 0 ? 'background: rgba(231,111,81,0.15);' : '';
+            if (p[8]) trBg = 'background: rgba(0,0,0,0.2);';
+            
+            html += `<tr style="border-bottom: 1px solid #444; ${trBg}">`;
+            html += `<td style="padding: 6px 0;"><b>${p[0]}</b></td>`; 
+            html += `<td>${p[2]}</td>`;        
+            html += `<td>${p[1]}</td>`;        
+            html += `<td>${p[3]}</td>`;        
+            html += `<td>${p[4]}</td>`;        
+            html += `<td>${p[5]}</td>`;        
+            html += `<td>${statusText}</td>`;
+            html += '</tr>';
+        }
+        html += '</table>';
+        debugContainer.innerHTML = html;
+    }
+
+    // 「試合終了」が押された時の処理
+    /** 
+     * @param {number} courtNum
+     * @returns {void}
+     */
+    function clickFinish(courtNum) {
+        let targetIndex = courtNum - 1;
+        let matchPlayers = [];
+        let remainingPlayers = [];
+//
+const courtState = activeCourts[targetIndex];
+        if (courtState && courtState.status === "playing") {
+            const modeElement = /** @type {HTMLInputElement} */ (document.querySelector('input[name="mode"]:checked'));
+            const mode = modeElement.value;
+            let matchData = courtState.playerIds;
+            let matchText = "";
+
+            if (mode === "1") {
+                matchText = `P${matchData[0]} vs P${matchData[1]}`;
+            } else {
+                matchText = `${matchData[0]}.${matchData[1]} vs ${matchData[2]}.${matchData[3]}`;
+            }
+
+            const historyLog = document.getElementById('match-history-log');
+            if (historyLog) {
+                // 初回（「まだ履歴はありません」の文字があるとき）は中身をクリア
+                if (historyLog.innerHTML.includes('まだ履歴はありません')) {
+                    historyLog.innerHTML = "";
+                }
+                // 現在の時刻を取得（お好みで追加）
+                const now = new Date();
+                const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+                
+                // 履歴を上から順番に追加（フォーカスは移動しません）
+                historyLog.innerHTML += `[${timeStr}] C${courtNum} : ${matchText}<br>`;
+            }
+        }
+      
+//
+        for (let i = 0; i < players.length; i++) {
+            if (players[i][5] === courtNum) {
+                matchPlayers.push(players[i]);
+            } else {
+                remainingPlayers.push(players[i]);
+            }
+        }
+
+        for (let i = 0; i < matchPlayers.length; i++) {
+            matchPlayers[i][5] = 0;
+        }
+
+        matchPlayers.sort((a, b) => a[3] - b[3]);
+        players = remainingPlayers.concat(matchPlayers);
+        for (let i = 0; i < players.length; i++) {
+            players[i][11] = i; 
+        }
+
+        activeCourts[targetIndex] = { status: "waiting", playerIds: null };
+        renderCourts();
+    }
+
+    // 「次の対戦」が押された時の処理
+    /** 
+     * @param {number} courtIndex
+     * @returns {void}
+     */
+    function clickNextMatch(courtIndex) {
+        let courtNum = courtIndex + 1;
+        let nextMatch = generateNextMatch(courtNum);
+
+        if (nextMatch) {
+            activeCourts[courtIndex] = { status: "playing", playerIds: nextMatch };
+        } else {
+            activeCourts[courtIndex] = { status: "empty", playerIds: null };
+        }
+
+        checkAndRefreshRestingPlayers();
+        renderCourts(); 
+    }
+    // 参加者追加ボタン
+    /** @returns {void} */
+    function addParticipant() {
+        if (players.length === 0) return alert("マッチングを開始してから追加してください。");
+
+        let maxPlayer = players.reduce((max, p) => p[0] > max[0] ? p : max, players[0]);
+        let maxId = maxPlayer[0];
+        let newId = maxId + 1; 
+
+        let newPlayerData = [
+            newId, 0, 0, 0, 0, 0, [], [], false, 0, 0, newId
+        ];
+
+        if (maxPlayer[3] === 0) {
+            let maxIndex = players.findIndex(p => p[0] === maxId);
+            players.splice(maxIndex + 1, 0, newPlayerData);
+            alert(`${newId}番を追加しました（まだ未対戦の人がいるため、${maxId}番の後ろに並びました）`);
+        } else {
+            players.unshift(newPlayerData);
+            alert(`${newId}番を追加しました（全員プレイ済みのため、先頭の最優先枠に入りました）`);
+        }
+        
+        for (let c = 0; c < globalCourtCount; c++) {
+            if (activeCourts[c] && activeCourts[c].status === "empty") {
+                let nextMatch = generateNextMatch(c + 1);
+                if (nextMatch) activeCourts[c] = { status: "playing", playerIds: nextMatch };
+            }
+        }
+        
+        checkAndRefreshRestingPlayers();
+        renderCourts(); 
+    }
+
+    // 参加者減少
+    /** @returns {void} */
+    function removeParticipant() {
+        const removeInput = /** @type {HTMLInputElement} */ (document.getElementById('remove-id'));
+        const removeId = parseInt(removeInput.value);
+
+        if (!removeId) return alert("番号を入力してください。");
+
+        let found = false;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i][0] === removeId && players[i][5] === 0) {
+                players[i][8] = true; 
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            alert(`${removeId}番の参加者を削除しました。`);
+        } else {
+            alert(`${removeId}番は存在しません、または試合中です`);
+        }
+        removeInput.value = '';
+        updateRestingListDisplay();
+        renderCourts();
+    }
+
+    // リセット
+    /** @returns {void} */
+    function resetApp() {
+        if (confirm("リセットしますか？")) {
+            const participantCount = /** @type {HTMLInputElement} */ (document.getElementById('participant-count'));
+            const courtCount = /** @type {HTMLInputElement} */ (document.getElementById('court-count'));
+            const matchBtn = /** @type {HTMLButtonElement} */ (document.getElementById('match-btn'));
+            const mode1 = /** @type {HTMLInputElement} */ (document.getElementById('mode1'));
+            const mode2 = /** @type {HTMLInputElement} */ (document.getElementById('mode2'));
+            const modeGroup = document.getElementById('mode-group');
+            const removeId = /** @type {HTMLInputElement} */ (document.getElementById('remove-id'));
+            const courtDisplayArea = document.getElementById('court-display-area');
+            const statusSummary = document.getElementById('status-summary');
+            const afterMatchSection = document.getElementById('after-match-section');
+
+            if (participantCount) participantCount.disabled = false;
+            if (courtCount) courtCount.disabled = false;
+            if (matchBtn) matchBtn.disabled = false;
+            if (mode1) mode1.disabled = false;
+            if (mode2) mode2.disabled = false;
+            if (modeGroup) modeGroup.classList.remove('disabled');
+
+            if (removeId) removeId.value = '';
+            players = []; 
+            activeCourts = [];
+            globalCourtCount = 0;
+            if (courtDisplayArea) courtDisplayArea.innerHTML = "";
+            if (statusSummary) statusSummary.textContent = "現在の空きコート数: 0面";
+            if (afterMatchSection) afterMatchSection.style.display = 'none';
+            
+            const debugContainer = document.getElementById('debug-container');
+            if (debugContainer) debugContainer.remove();
+          const historyLog = document.getElementById('match-history-log'); if(historyLog) historyLog.innerHTML = '<span style="color: #999;">（まだ履歴はありません）</span>';
+        }
+
+        const restDisp = document.getElementById('resting-list-display'); if(restDisp) restDisp.textContent = 'お休み中: なし';
+      
+    }
+
+    // コートの「休止/稼働」をリアルタイムに切り替える関数
+    /** 
+     * @param {number} courtNum
+     * @returns {void}
+     */
+    function toggleCourtActive(courtNum) {
+        let targetIndex = courtNum - 1;
+        let currentState = activeCourts[targetIndex];
+
+        if (currentState && currentState.status === "disabled") {
+            activeCourts[targetIndex] = { status: "waiting", playerIds: null };
+            alert(`コート${courtNum} の稼働を再開しました。`);
+        } 
+        else if (currentState && currentState.status === "playing") {
+            alert(`コート${courtNum} は現在試合中です。試合終了を押してから休止してください。`);
+            return;
+        } 
+        else {
+            activeCourts[targetIndex] = { status: "disabled", playerIds: null };
+            alert(`コート${courtNum} を休止しました。`);
+        }
+
+        checkAndRefreshRestingPlayers();
+        renderCourts();
+    }
+
+              // ★ここから：一時休み・復帰のコントロールロジック（要望）
+    /** @returns {void} */
+    function pauseParticipant() {
+        const input = /** @type {HTMLInputElement} */ (document.getElementById('rest-id'));
+        const id = parseInt(input.value);
+        if (!id) return alert("番号を入力してください。");
+
+        let found = false;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i][0] === id) {
+                if (players[i][5] > 0) {
+                    alert(`${id}番は現在試合中のため、お休みにできません。試合終了後に操作してください。`);
+                    return;
+                }
+                if (players[i][8] === true) {
+                    alert(`${id}番はすでに削除されています。`);
+                    return;
+                }
+                players[i][12] = true; // 配列の13番目に「一時休みフラグ」をセット
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            alert(`${id}番を「お休み」にしました。次のマッチングからスキップされます。`);
+            updateRestingListDisplay();
+        } else {
+            alert(`${id}番のプレイヤーは見つかりませんでした。`);
+        }
+        input.value = '';
+    }
+
+    /** @returns {void} */
+    function resumeParticipant() {
+        const input = /** @type {HTMLInputElement} */ (document.getElementById('rest-id'));
+        const id = parseInt(input.value);
+        if (!id) return alert("番号を入力してください。");
+
+        let found = false;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i][0] === id && players[i][12] === true) {
+                players[i][12] = false; // 一時休みフラグを解除
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            alert(`${id}番が復帰しました！次のマッチングから選出対象に戻ります。`);
+            updateRestingListDisplay();
+        } else {
+            alert(`${id}番はお休み中リストにいないか、存在しません。`);
+        }
+        input.value = '';
+    }
+      // お休み中と削除済のプレイヤーをそれぞれ分けて綺麗に並べて表示する処理（拡張版）
+    /** @returns {void} */
+    function updateRestingListDisplay() {
+        const display = document.getElementById('resting-list-display');
+        if (!display) return;
+
+        let restingIds = []; // 一時お休み中の人を入れる配列
+        let removedIds = []; // 完全に削除された人を入れる配列
+
+        for (let i = 0; i < players.length; i++) {
+            // 配列の[8]番目がtrue ➔ 完全に削除されたプレイヤー
+            if (players[i][8] === true) {
+                removedIds.push(`P${players[i][0]}`);
+            }
+            // 配列の[12]番目がtrueで、かつ削除されていない ➔ 一時お休み中のプレイヤー
+            else if (players[i][12] === true) {
+                restingIds.push(`P${players[i][0]}`);
+            }
+        }
+
+        // 画面に表示する文字列を組み立てる
+        let textParts = [];
+        
+        if (restingIds.length > 0) {
+            textParts.push(`お休み中: ${restingIds.join(', ')}`);
+        } else {
+            textParts.push(`お休み中: なし`);
+        }
+
+        if (removedIds.length > 0) {
+            textParts.push(`<span style="color: #6c757d; margin-left: 10px;">削除済: ${removedIds.join(', ')}</span>`);
+        }
+
+        // HTMLとして画面に差し込む（削除済はグレーの文字で表示されます）
+        display.innerHTML = textParts.join(' | ');
+    }
+
+    // ★ここまで
+  
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered'));
+}
+</script>
+</body>
+</html>
