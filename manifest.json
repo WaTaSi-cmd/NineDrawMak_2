@@ -1,12 +1,12 @@
 {
-  "name": "ピックルボール マッチングv2",
-  "short_name": "ピックルマッチv2",
+  "name": "ピックルボール マッチングv3",
+  "short_name": "ピックルマッチv3",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f9f9",
   "theme_color": "#2a9d8f",
-  "id":"pickle-match-v2",
+  "id":"pickle-match-v3",
   "icons": [
     {
       "src": "sports_court192_2.png",
