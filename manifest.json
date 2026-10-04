@@ -2,7 +2,7 @@
   "name": "組み合わせv3",
   "short_name": "組み合わせv3",
   "id":"NineDrawMak_2",
-  "start_url": "/NineDrawMak_2/",
+  "start_url": "/NineDrawMak_2/index.html",
   "scope": "/NineDrawMak_2/",
   "display": "standalone",
   "background_color": "#f4f9f9",
