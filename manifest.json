@@ -11,12 +11,14 @@
     {
       "src": "sports_court192_2.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable" 
     },
     {
       "src": "sports_court512_2.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable" 
     }
   ]
 }
